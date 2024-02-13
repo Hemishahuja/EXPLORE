@@ -1,0 +1,74 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import fsolve
+
+# Constants
+G = 6.67430e-11  # gravitational constant in m^3 kg^-1 s^-2
+M = 1.989e30     # mass of the Sun in kg
+c = 299792458    # speed of light in m/s
+
+'''
+1) Defining the metrics for the Schwarzchild black hole first
+2) Calculating h(r)^2 AKA ‘effective potential' based on the using the eq 17 from the paper
+3) Finding photon sphere which is when derivative of h(r)^2 = 0
+4) Finding the critical impact parameter b which = h(radius of photon sphere)
+5) Finding the angular size of the shadow using the sin^2(alpha) formula to find alpha
+6) Plot lol
+
+'''
+
+# Schwarzschild metric functions
+def F(r):
+    return 1 - (2 * G * M) / (r * c**2)
+
+def H(r):
+    return r**2
+
+def G_metric(r):
+    return 1 / (1 - (2*G*M)/(r*c**2))
+
+# Function to find the photon sphere radius r_ph
+def dh_dr(r):
+    # Derivative of h(r)
+    return (2 * r * F(r) - r**2 * dF_dr(r)) / (F(r)**2)
+
+def dF_dr(r):
+    # Derivative of F(r)
+    return (2 * G * M) / (c**2 * r**2)
+
+# Initial guess for the photon sphere radius
+initial_guess = 3 * (2 * G * M / c**2) / 2
+r_photon_sphere = fsolve(dh_dr, initial_guess)[0] #GPT helped with this step
+
+
+# Function h(r) as defined in Eq. (17) from the document
+def h(r):
+    return np.sqrt(H(r) / F(r))
+
+# Observer's radius
+r_obs = 100 * r_photon_sphere
+
+# Calculate the critical impact parameter b_cr
+b_cr = h(r_photon_sphere)
+
+# Calculate sin^2(alpha_sh)
+sin_alpha_sh_squared = b_cr**2 / h(r_obs)**2
+
+# Calculate the shadow radius at the observer's position
+shadow_radius = r_obs * np.sqrt(sin_alpha_sh_squared) #Sintheta = opposite/hypotenues
+
+# Plotting the shadow
+theta = np.linspace(0, 2 * np.pi, 1000)
+x_shadow = shadow_radius * np.cos(theta)
+y_shadow = shadow_radius * np.sin(theta)
+
+# Plot the shadow
+plt.figure(figsize=(8, 8))
+plt.plot(x_shadow, y_shadow, 'k')
+plt.fill(x_shadow, y_shadow, 'k', alpha=0.5)
+plt.title("Black Hole Shadow at Observer's Position")
+plt.xlabel("X Coordinate (m)")
+plt.ylabel("Y Coordinate (m)")
+plt.grid(True)
+plt.axis('equal')
+plt.show()
